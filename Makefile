@@ -1,6 +1,6 @@
 NAME=pixelart
 
-SRCS = main.asm
+SRCS = main.asm waterfall.asm
 
 .DEFAULT_GOAL := $(NAME).smc
 
@@ -17,6 +17,7 @@ endif
 $(NAME).smc: $(patsubst %.asm,%.o,$(SRCS)) gfx/palette.bin
 	echo '[objects]' > temp
 	echo 'main.o' >> temp
+	echo 'waterfall.o' >> temp
 	wlalink temp $@
 	rm temp
 
