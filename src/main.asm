@@ -1,6 +1,6 @@
 ;== Include memorymap, header info, and SNES initialization routines
-.INCLUDE "header.inc"
-.INCLUDE "InitSNES.asm"
+.INCLUDE "include/header.inc"
+.INCLUDE "include/InitSNES.asm"
 
 ;========================
 ; Start
