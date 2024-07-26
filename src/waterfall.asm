@@ -84,7 +84,7 @@ init:
     sta $2108       ; for BG2
     stz $210b ; tileset starts at $0000
 
-    lda #%00000011 ; enable BG1
+    lda #%00000011 ; enable BG1, BG2
     sta $212c
 
     ; initialize variables
@@ -94,7 +94,7 @@ init:
     stz BG2_XOFF
     stz BG2_YOFF
     sep #$20        ; 8bit a
-    rts
+    rtl
 
 ; run during vblank
 update:
@@ -129,7 +129,7 @@ update:
     xba
     and #%00000111
     sta $2110
-    rts
+    rtl
 
 .ENDS
 
@@ -139,7 +139,7 @@ update:
 .section "gfxdata" NAMESPACE "waterfall"
 
 palette_data:
-.fopen "gfx/palette.bin" fp
+.fopen "gfx/waterfall/palette.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
@@ -149,7 +149,7 @@ palette_data:
 @end:
 
 tile_data:
-.fopen "gfx/tileset.bin" fp
+.fopen "gfx/waterfall/tileset.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
@@ -159,7 +159,7 @@ tile_data:
 @end:
 
 bg1_data:
-.fopen "gfx/bg1.bin" fp
+.fopen "gfx/waterfall/bg1.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
@@ -169,7 +169,7 @@ bg1_data:
 @end:
 
 bg2_data:
-.fopen "gfx/bg2.bin" fp
+.fopen "gfx/waterfall/bg2.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d

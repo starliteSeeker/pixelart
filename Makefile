@@ -14,7 +14,7 @@ endif
 %.d: src/%.asm
 	wla-65816 -M -MF $@ $<
 
-$(NAME).smc: $(patsubst %.asm,%.o,$(SRCS)) gfx/palette.bin
+$(NAME).smc: $(patsubst %.asm,%.o,$(SRCS))
 	echo '[objects]' > temp
 	echo 'main.o' >> temp
 	echo 'waterfall.o' >> temp
