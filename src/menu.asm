@@ -1,14 +1,12 @@
 .INCLUDE "include/header.inc" ONCE
 
-.DEFINE BG1_XOFF $0100 ; 2 bytes, Q15.1
-.DEFINE BG2_XOFF $0102 ; 2 bytes, Q15.1
-.DEFINE BG2_YOFF $0104 ; 2 bytes
-
 .BANK 0 SLOT 0
 .ORG 0
-.SECTION "waterfall" NAMESPACE "waterfall"
+.SECTION "menu" NAMESPACE "menu"
 .ACCU 8
 .INDEX 16
+
+.DEFINE REDRAW_FLAG $0100 ; redraw menu at start and after page scroll
 
 ; run at first load
 init:
@@ -28,12 +26,12 @@ init:
     lda #%00000001      ; start DMA, channel 0
     sta $420b
 
-    ; load tiles
+    ; load tileset
     ldy #$0000          ; Write to VRAM from $0000
     sty $2116
-    ldx #tile_data   ; Address
-    lda #:tile_data  ; of tiles
-    ldy #(tile_data@end - tile_data)      ; length of data
+    ldx #text_data   ; Address
+    lda #:text_data  ; of tiles
+    ldy #(text_data@end - text_data)      ; length of data
     stx $4302           ; write
     sta $4304           ; address
     sty $4305           ; and length
@@ -44,8 +42,8 @@ init:
     lda #%00000001      ; start DMA, channel 0
     sta $420b
 
-    ; load tilemap
-    ldy #$2000 ; VRAM starting address
+    ; load bg1 (select arrow)
+    ldy #$1000 ; VRAM starting address
     sty $2116
     ldx #bg1_data   ; Address
     lda #:bg1_data  ; of tiles
@@ -59,12 +57,13 @@ init:
     sta $4301           ; set destination
     lda #%00000001      ; start DMA, channel 0
     sta $420b
-
+    ; load bg2 (menu text)
+    ; load bg3 (menu background)
     ldy #$3000 ; VRAM starting address
     sty $2116
-    ldx #bg2_data   ; Address
-    lda #:bg2_data  ; of tiles
-    ldy #(bg2_data@end - bg2_data)      ; length of data
+    ldx #bg3_data   ; Address
+    lda #:bg3_data  ; of tiles
+    ldy #(bg3_data@end - bg3_data)      ; length of data
     stx $4302           ; write
     sta $4304           ; address
     sty $4305           ; and length
@@ -75,71 +74,44 @@ init:
     lda #%00000001      ; start DMA, channel 0
     sta $420b
 
-    ;set up the screen
-    lda #%00110000  ; 16x16 tiles, mode 0
-    sta $2105       ; screen mode register
-    lda #$20  ; data starts from $2000
+    stz $2105 ; 8x8 tiles
+    lda #$10  ; data starts from $1000
     sta $2107       ; for BG1
-    lda #$30  ; data starts from $3000
+    lda #$20  ; data starts from $2000
     sta $2108       ; for BG2
+    lda #$30  ; data starts from $3000
+    sta $2109       ; for BG3
     stz $210b ; tileset starts at $0000
 
-    lda #%00000011 ; enable BG1, BG2
+    lda #%00000101 ; enable BG1 and 3
     sta $212c
 
-    ; initialize variables
-    rep #$20        ; 16bit a
-    ; reset 16-bit variables
-    stz BG1_XOFF
-    stz BG2_XOFF
-    stz BG2_YOFF
-    sep #$20        ; 8bit a
+    ; initialize variable
+    lda #1
+    sta REDRAW_FLAG
+
     rts
 
 ; run during vblank
 update:
-    rep #$20        ; 16bit a
-    lda BG1_XOFF 
-    ina
-    sta BG1_XOFF
-    lsr
-    sep #$20        ; 8bit a
-    sta $210d
-    xba
-    and #%00000111
-    sta $210d
-
-    rep #$20        ; 16bit a
-    lda BG2_XOFF 
-    ina
-    sta BG2_XOFF
-    lsr
-    sep #$20        ; 8bit a
-    sta $210f
-    xba
-    and #%00000111
-    sta $210f
-
-    rep #$20        ; 16bit a
-    lda BG2_YOFF 
-    dea
-    sta BG2_YOFF
-    sep #$20        ; 8bit a
-    sta $2110
-    xba
-    and #%00000111
-    sta $2110
+    lda REDRAW_FLAG
+    beq update_end
+    ; draw menu entries
+    ldx #$2000
+    stx $2116
+    ldy #$0001
+    sty $2118
+    stz REDRAW_FLAG
     rts
 
 .ENDS
 
-; graphics data
-.bank 1 slot 0       ; We'll use bank 1
-.org 0
-.section "gfxdata" NAMESPACE "waterfall"
+.BANK 1 SLOT 0
+.ORG 0
+.SECTION "menu_data"
 
 palette_data:
-.fopen "gfx/waterfall/palette.bin" fp
+.fopen "gfx/menu/palette.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
@@ -148,8 +120,8 @@ palette_data:
 .undefine t, d
 @end:
 
-tile_data:
-.fopen "gfx/waterfall/tileset.bin" fp
+text_data:
+.fopen "gfx/ascii.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
@@ -159,7 +131,7 @@ tile_data:
 @end:
 
 bg1_data:
-.fopen "gfx/waterfall/bg1.bin" fp
+.fopen "gfx/menu/bg1.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
@@ -168,8 +140,8 @@ bg1_data:
 .undefine t, d
 @end:
 
-bg2_data:
-.fopen "gfx/waterfall/bg2.bin" fp
+bg3_data:
+.fopen "gfx/menu/bg3.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
