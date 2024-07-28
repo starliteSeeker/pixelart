@@ -129,6 +129,8 @@ update:
     xba
     and #%00000111
     sta $2110
+
+    lda #0
     rts
 
 .ENDS

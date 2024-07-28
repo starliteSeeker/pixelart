@@ -102,6 +102,9 @@ update:
     ldy #$0001
     sty $2118
     stz REDRAW_FLAG
+
+update_end:
+    lda #0
     rts
 
 .ENDS

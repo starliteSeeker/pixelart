@@ -10,7 +10,10 @@
 .ORG 0
 .SECTION "MainCode"
 
+; RAM $0000 to $00FF reserved for main
 .DEFINE CUR_SEL $0000 EXPORT
+.DEFINE INPUT_PRESSED $0001 EXPORT ; 2 bytes, is button pressed on this frame
+.DEFINE INPUT_DOWN $0003 EXPORT ; 2 bytes, is button held down
 
 Start:
     InitializeSNES            ; Init Snes :)
@@ -19,8 +22,10 @@ Start:
     sep #%00100000  ;8 bit ab
 
     ; initialize variable
-    stz CUR_SEL
+    lda #1
+    sta CUR_SEL
 
+restart:
     ; jump to init function based on jump table
     lda #$00
     xba
@@ -38,17 +43,50 @@ init_end:
 
 forever:
     wai
-    jmp forever
+    cmp #0
+    beq +
+    ; turn off screen and restart
+    lda #%10000000
+    sta $2100
+    jmp restart
+
++   jmp forever
 
 
 VBlank:
-    lda #$00
+    ; process input
+    lda $4212       ; get joypad status
+    and #%00000001  ; if joy is not ready
+    bne VBlank      ; wait
+    rep #$20 ; 16bit a
+    lda INPUT_DOWN
+    eor #-1
+    sta INPUT_PRESSED
+    lda $4218       ; read joypad
+    sta INPUT_DOWN
+    eor #-1
+    trb INPUT_PRESSED
+    sep #$20
+
+    ; restart from menu if start and select are pressed
+    lda INPUT_PRESSED+1
+    bit #%00110000
+    beq + 
+    lda INPUT_DOWN+1
+    and #%00110000
+    cmp #%00110000
+    bne +
+    stz CUR_SEL ; set to menu
+    lda #-1
+    rti
+
+    ; jump to update function
++   lda #$00
     xba
     lda CUR_SEL
     asl
     tax
     jsr (update_jump_table, X)
-update_end:
     rti
 
 init_jump_table:
@@ -79,6 +117,7 @@ EmptyHandler:
 .ORG 0
 .SECTION "menu_data"
 
+; max count 127? because jump table code
 menu_entry_count:
     .DB 2
 
