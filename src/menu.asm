@@ -6,7 +6,8 @@
 .ACCU 8
 .INDEX 16
 
-.DEFINE REDRAW_FLAG $0100 ; redraw menu at start and after page scroll
+; CUR_SEL current selection defined in main
+.DEFINE CURSOR_IDX $0100 
 
 ; run at first load
 init:
@@ -58,6 +59,46 @@ init:
     lda #%00000001      ; start DMA, channel 0
     sta $420b
     ; load bg2 (menu text)
+    rep #$20 ; 16bit a
+    lda #$2000 ; VRAM starting address
+    sta $2116
+    ldx #0
+    lda menu_entry_count.l
+    and #$00ff
+    cmp #16 ; cap to 16 entries
+    bcc + ; branch if less than
+    lda #16
++   asl ; *32 (each menu entry has 32 characters)
+    asl
+    asl
+    asl
+    asl
+    tay
+-   lda menu_entry.l, x
+    and #$00ff
+    sta $2118
+    inx
+    dey
+    bne -
+    ; fill with empty tiles
+    lda menu_entry_count.l
+    and #$00ff
+    sec
+    sbc #16
+    bcc +
+    lda #0
++   sec
+    sbc #16
+    asl
+    asl
+    asl
+    asl
+    asl
+    tay
+-   stz $2118
+    iny
+    bmi -
+    sep #$20 ; 8bit a
     ; load bg3 (menu background)
     ldy #$3000 ; VRAM starting address
     sty $2116
@@ -83,28 +124,119 @@ init:
     sta $2109       ; for BG3
     stz $210b ; tileset starts at $0000
 
-    lda #%00000101 ; enable BG1 and 3
+    lda #%00000111 ; enable BG1, 2 and 3
     sta $212c
 
+    ; move backgrounds to correct position
+    ; bg1
+    stz $210d
+    stz $210d
+    stz $210e
+    stz $210e
+    ; bg2
+    lda #(5<<3)
+    eor #-1
+    ina
+    sta $210f
+    lda #$ff
+    sta $210f
+    lda #(8<<3)
+    eor #-1
+    ina
+    sta $2110
+    lda #$ff
+    sta $2110
+    ; bg3
+    stz $2111
+    stz $2111
+    stz $2112
+    stz $2112
+
     ; initialize variable
-    lda #1
-    sta REDRAW_FLAG
+    stz CURSOR_IDX
 
     rts
 
 ; run during vblank
 update:
-    lda REDRAW_FLAG
-    beq update_end
-    ; draw menu entries
-    ldx #$2000
-    stx $2116
-    ldy #$0001
-    sty $2118
-    stz REDRAW_FLAG
+    ; up button
+    lda INPUT_PRESSED+1
+    bit #%00001000
+    beq +
+    ; up button pressed
+    lda CURSOR_IDX
+    beq + ; can't scroll up
+    dec CURSOR_IDX
+    ; update menu entry text
+    ; erase bottom entry
+    ; add top entry
+    ; change y offset
+    ; TODO
+    jmp update_arrow
 
-update_end:
-    lda #0
+    ; down button
++   bit #%00000100
+    beq +
+    ; down button pressed
+    lda CURSOR_IDX
+    ina
+    cmp.l menu_entry_count
+    bcs + ; branch if greater than or equal to, can't scroll down
+    inc CURSOR_IDX
+    ; move selection arrow
+update_arrow:
+    lda CURSOR_IDX
+    cmp #$08
+    bcc scroll_top
+    sec
+    sbc.l menu_entry_count
+    clc
+    adc #$08
+    bcs scroll_bot
+scroll_mid:
+    ; y offset = -(7 * 8)
+    lda #(7<<3)
+    eor #-1
+    ina
+    sta $210e
+    lda #-1
+    sta $210e
+    jmp +
+scroll_top: ; idx = 0~7
+    ; y offset = -(cursor_idx * 8)
+    rep #$20 ; 16bit a
+    lda CURSOR_IDX
+    and #$00ff
+    asl
+    asl
+    asl
+    eor #-1
+    ina
+    sep #$20
+    sta $210e
+    xba
+    sta $210e
+    jmp +
+scroll_bot: ; idx = count-8~count-1
+    ; y offset = -((16 - menu_entry_count + cursor_idx) * 8)
+    lda #16
+    sec
+    sbc menu_entry_count.l
+    clc
+    adc CURSOR_IDX
+    rep #$20 ; 16bit a
+    and #$00ff
+    asl
+    asl
+    asl
+    eor #-1
+    ina
+    sep #$20
+    sta $210e
+    xba
+    sta $210e
+
++   lda #0
     rts
 
 .ENDS
@@ -112,6 +244,34 @@ update_end:
 .BANK 1 SLOT 0
 .ORG 0
 .SECTION "menu_data"
+
+; max count 127? because jump table code
+menu_entry_count:
+    .DB (menu_entry@end - menu_entry) / 32
+
+menu_entry:
+    ;   "each.entry.is.32.bytes.........."
+    .DB "ZERO                            "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONE                             "
+    .DB "ONEX                            "
+@end
 
 palette_data:
 .fopen "gfx/menu/palette.bin" fp

@@ -100,7 +100,6 @@ update_jump_table:
 dummy:
     rtl
 
-
 .ENDS
 
 ; bring out from header file to avoid multiple instances of EmptyHandler label
@@ -112,18 +111,3 @@ EmptyHandler:
     rti
 .ENDS
 
-
-.BANK 1 SLOT 0
-.ORG 0
-.SECTION "menu_data"
-
-; max count 127? because jump table code
-menu_entry_count:
-    .DB 2
-
-menu_entry:
-    ;   "each.entry.is.32.bytes.........."
-    .DB "ZERO                            "
-    .DB "ONE                             "
-
-.ENDS
