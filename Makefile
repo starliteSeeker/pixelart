@@ -24,7 +24,5 @@ $(NAME).smc: $(OBJS)
 	wlalink temp $@
 	rm temp
 
-test:
-
 clean:
 	rm -f *.smc $(OBJS) $(DEPS) temp
