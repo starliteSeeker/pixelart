@@ -66,7 +66,7 @@ init:
     lda menu_entry_count.l
     and #$00ff
     cmp #16 ; cap to 16 entries
-    bcc + ; branch if less than
+    blt +
     lda #16
 +   asl ; *32 (each menu entry has 32 characters)
     asl
@@ -80,12 +80,12 @@ init:
     inx
     dey
     bne -
-    ; fill with empty tiles
+    ; fill with empty tiles (16 + max(16 - count, 0) rows)
     lda menu_entry_count.l
     and #$00ff
     sec
     sbc #16
-    bcc +
+    blt +
     lda #0
 +   sec
     sbc #16
@@ -159,6 +159,10 @@ init:
 
 ; run during vblank
 update:
+    ; check button -> update CURSOR_IDX -> update text and selection cursor
+    ; cursor can be at top (0~6), middle (not top or bottom) or bottom (menu_count-8~menu_count-1)
+    ; update menu text when cursor is in the middle section
+
     ; up button
     lda INPUT_PRESSED+1
     bit #%00001000
@@ -167,76 +171,191 @@ update:
     lda CURSOR_IDX
     beq + ; can't scroll up
     dec CURSOR_IDX
-    ; update menu entry text
-    ; erase bottom entry
-    ; add top entry
-    ; change y offset
-    ; TODO
     jmp update_arrow
 
     ; down button
 +   bit #%00000100
-    beq +
-    ; down button pressed
+    bne +
+ret lda #0
+    rts
++   ; down button pressed
     lda CURSOR_IDX
     ina
     cmp.l menu_entry_count
-    bcs + ; branch if greater than or equal to, can't scroll down
+    bge ret ; can't scroll down
     inc CURSOR_IDX
     ; move selection arrow
 update_arrow:
     lda CURSOR_IDX
-    cmp #$08
-    bcc scroll_top
+    cmp #$07
+    blt scroll_top
     sec
     sbc.l menu_entry_count
     clc
     adc #$08
-    bcs scroll_bot
+    bge scroll_bot
+    bra scroll_mid
+
+scroll_top: ; idx = 0~6
+    ; y offset of menu text
+    lda #-(8<<3)
+    sta $2110
+    stz $2110
+    ; y offset of cursor = -(cursor_idx * 8)
+    rep #$20 ; 16bit a
+    lda CURSOR_IDX
+    and #$00ff
+    bra ++
+scroll_bot: ; idx = count-8~count-1
+    ; y offset of menu text
+    .ACCU 8
+    lda menu_entry_count.l
+    sec
+    sbc #16
+    bge +++
+    lda #0
++++ sec
+    sbc #8
+    asl
+    asl
+    asl
+    sta $2110
+    stz $2110
+    ; y offset of cursor = -((min(0, 16 - menu_entry_count) + cursor_idx) * 8)
+    lda #16
+    sec
+    sbc menu_entry_count.l
+    blt +
+    lda #0
++   clc
+    adc CURSOR_IDX
+    rep #$20 ; 16bit a
+    and #$00ff
+++  asl
+    asl
+    asl
+    eor #-1
+    ina
+    sep #$20 ; 8bit a
+    sta $210e
+    xba
+    sta $210e
+    lda #0
+    rts
+
 scroll_mid:
-    ; y offset = -(7 * 8)
+    ; update menu entry text
+    lda INPUT_PRESSED+1
+    bit #%00001000
+    beq ++
+    ; up pressed
+    lda CURSOR_IDX
+    sec
+    sbc menu_entry_count.l
+    cmp #-9
+    beq + ; no need to update text
+    ; erase bottom entry (idx + 9)
+    lda CURSOR_IDX
+    clc
+    adc #9
+    rep #$20 ; 16bit a
+    and #$001f ; mod 32
+    asl ; *32 tiles per row
+    asl
+    asl
+    asl
+    asl
+    clc
+    adc #$2000
+    sta $2116
+    ldx #32
+-   stz $2118
+    dex
+    bne -
+    ; add top entry (idx - 7)
+    lda CURSOR_IDX
+    sec
+    sbc #7
+    and #$001f
+    asl
+    asl
+    asl
+    asl
+    asl
+    tax
+    adc #$2000
+    sta $2116
+    ldy #32
+-   lda menu_entry.l, x
+    and #$00ff
+    sta $2118
+    inx
+    dey
+    bne -
+    sep #$20 ; 8bit a
++   bra +
+
+++  ; down pressed
+    lda CURSOR_IDX
+    cmp #7
+    beq + ; no need to update text
+    ; erase top entry (idx - 8)
+    sec
+    sbc #8
+    rep #$20 ; 16bit a
+    and #$001f ; mod 32
+    asl ; *32 tiles per row
+    asl
+    asl
+    asl
+    asl
+    clc
+    adc #$2000
+    sta $2116
+    ldx #32
+-   stz $2118
+    dex
+    bne -
+    ; add bottom entry (idx + 8)
+    lda CURSOR_IDX
+    clc
+    adc #8
+    and #$001f
+    asl
+    asl
+    asl
+    asl
+    asl
+    tax
+    adc #$2000
+    sta $2116
+    ldy #32
+-   lda menu_entry.l, x
+    and #$00ff
+    sta $2118
+    inx
+    dey
+    bne -
+    sep #$20 ; 8bit a
+    
++   ; y offset of menu text
+    lda CURSOR_IDX
+    sec
+    sbc #15 ; -7 because (idx - 7) then -8 because default offset
+    and #$1f ; mod 32
+    asl
+    asl
+    asl
+    sta $2110
+    stz $2110
+    ; y offset of cursor = -(7 * 8)
     lda #(7<<3)
     eor #-1
     ina
     sta $210e
     lda #-1
     sta $210e
-    jmp +
-scroll_top: ; idx = 0~7
-    ; y offset = -(cursor_idx * 8)
-    rep #$20 ; 16bit a
-    lda CURSOR_IDX
-    and #$00ff
-    asl
-    asl
-    asl
-    eor #-1
-    ina
-    sep #$20
-    sta $210e
-    xba
-    sta $210e
-    jmp +
-scroll_bot: ; idx = count-8~count-1
-    ; y offset = -((16 - menu_entry_count + cursor_idx) * 8)
-    lda #16
-    sec
-    sbc menu_entry_count.l
-    clc
-    adc CURSOR_IDX
-    rep #$20 ; 16bit a
-    and #$00ff
-    asl
-    asl
-    asl
-    eor #-1
-    ina
-    sep #$20
-    sta $210e
-    xba
-    sta $210e
-
-+   lda #0
+    lda #0
     rts
 
 .ENDS
@@ -251,26 +370,8 @@ menu_entry_count:
 
 menu_entry:
     ;   "each.entry.is.32.bytes.........."
-    .DB "ZERO                            "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONE                             "
-    .DB "ONEX                            "
+    .DB "./                              "
+    .DB "waterfall                       "
 @end
 
 palette_data:

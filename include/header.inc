@@ -51,3 +51,12 @@
  
 .EMPTYFILL $00
 ;---------------------------------- END -------------------------------------
+
+
+.MACRO blt ARGS label ; branch if less than
+    bcc label
+.ENDM
+.MACRO bge ARGS label ; branch if greater than or equal to
+    bcs label
+.ENDM
+
