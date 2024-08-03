@@ -1,5 +1,5 @@
 ;== Include memorymap, header info, and SNES initialization routines
-.INCLUDE "include/header.inc"
+.INCLUDE "include/header.inc" ONCE
 .INCLUDE "include/InitSNES.asm"
 
 ;========================
@@ -10,9 +10,10 @@
 .ORG 0
 .SECTION "MainCode"
 
-.DEFINE BG1_XOFF $0000 ; 2 bytes, Q15.1
-.DEFINE BG2_XOFF $0002 ; 2 bytes, Q15.1
-.DEFINE BG2_YOFF $0004 ; 2 bytes
+; RAM $0000 to $00FF reserved for main
+.DEFINE CUR_SEL $0000 EXPORT
+.DEFINE INPUT_PRESSED $0001 EXPORT ; 2 bytes, is button pressed on this frame
+.DEFINE INPUT_DOWN $0003 EXPORT ; 2 bytes, is button held down
 
 Start:
     InitializeSNES            ; Init Snes :)
@@ -20,81 +21,20 @@ Start:
     rep #%00010000  ;16 bit xy
     sep #%00100000  ;8 bit ab
 
-    ; load palette
-    lda #$00 ; start from palette 0
-    sta $2121
-    ldx #palette_data
-    lda #:palette_data
-    ldy #(palette_data@end - palette_data)
-    stx $4302
-    sta $4304
-    sty $4305
-    lda #%00000010 ; 1 addr write once
-    sta $4300
-    lda #$22 ; register $2122 (CGDATA)
-    sta $4301
-    lda #%00000001      ; start DMA, channel 0
-    sta $420b
+    ; initialize variable
+    lda #1
+    sta CUR_SEL
 
-    ; load tiles
-    ldy #$0000          ; Write to VRAM from $0000
-    sty $2116
-    ldx #tile_data   ; Address
-    lda #:tile_data  ; of tiles
-    ldy #(tile_data@end - tile_data)      ; length of data
-    stx $4302           ; write
-    sta $4304           ; address
-    sty $4305           ; and length
-    lda #%00000001      ; set this mode (transferring words)
-    sta $4300
-    lda #$18            ; $211[89]: VRAM data write
-    sta $4301           ; set destination
-    lda #%00000001      ; start DMA, channel 0
-    sta $420b
+restart:
+    ; jump to init function based on jump table
+    lda #$00
+    xba
+    lda CUR_SEL
+    asl
+    tax
+    jsr (init_jump_table, X)
 
-    ; load tilemap
-    ldy #$2000 ; VRAM starting address
-    sty $2116
-    ldx #bg1_data   ; Address
-    lda #:bg1_data  ; of tiles
-    ldy #(bg1_data@end - bg1_data)      ; length of data
-    stx $4302           ; write
-    sta $4304           ; address
-    sty $4305           ; and length
-    lda #%00000001      ; set this mode (transferring words)
-    sta $4300
-    lda #$18            ; $211[89]: VRAM data write
-    sta $4301           ; set destination
-    lda #%00000001      ; start DMA, channel 0
-    sta $420b
-
-    ldy #$3000 ; VRAM starting address
-    sty $2116
-    ldx #bg2_data   ; Address
-    lda #:bg2_data  ; of tiles
-    ldy #(bg2_data@end - bg2_data)      ; length of data
-    stx $4302           ; write
-    sta $4304           ; address
-    sty $4305           ; and length
-    lda #%00000001      ; set this mode (transferring words)
-    sta $4300
-    lda #$18            ; $211[89]: VRAM data write
-    sta $4301           ; set destination
-    lda #%00000001      ; start DMA, channel 0
-    sta $420b
-
-    ;set up the screen
-    lda #%00110000  ; 16x16 tiles, mode 0
-    sta $2105       ; screen mode register
-    lda #$20  ; data starts from $2000
-    sta $2107       ; for BG1
-    lda #$30  ; data starts from $3000
-    sta $2108       ; for BG2
-    stz $210b ; tileset starts at $0000
-
-    lda #%00000011 ; enable BG1
-    sta $212c
-
+init_end:
     lda #$0F
     sta $2100           ; Turn on screen, full brightness
 
@@ -103,87 +43,71 @@ Start:
 
 forever:
     wai
-    jmp forever
+    cmp #0
+    beq +
+    ; turn off screen and restart
+    lda #%10000000
+    sta $2100
+    jmp restart
+
++   jmp forever
+
 
 VBlank:
-    rep #$20        ; 16bit a
-    lda BG1_XOFF 
-    ina
-    sta BG1_XOFF
-    lsr
-    sep #$20        ; 8bit a
-    sta $210d
-    xba
-    and #%00000111
-    sta $210d
+    ; process input
+    lda $4212       ; get joypad status
+    and #%00000001  ; if joy is not ready
+    bne VBlank      ; wait
+    rep #$20 ; 16bit a
+    lda INPUT_DOWN
+    eor #-1
+    sta INPUT_PRESSED
+    lda $4218       ; read joypad
+    sta INPUT_DOWN
+    eor #-1
+    trb INPUT_PRESSED
+    sep #$20
 
-    rep #$20        ; 16bit a
-    lda BG2_XOFF 
-    ina
-    sta BG2_XOFF
-    lsr
-    sep #$20        ; 8bit a
-    sta $210f
-    xba
-    and #%00000111
-    sta $210f
-
-    rep #$20        ; 16bit a
-    lda BG2_YOFF 
-    dea
-    sta BG2_YOFF
-    sep #$20        ; 8bit a
-    sta $2110
-    xba
-    and #%00000111
-    sta $2110
+    ; restart from menu if start and select are pressed
+    lda INPUT_PRESSED+1
+    bit #%00110000
+    beq + 
+    lda INPUT_DOWN+1
+    and #%00110000
+    cmp #%00110000
+    bne +
+    stz CUR_SEL ; set to menu
+    lda #-1
     rti
 
-.ENDS
+    ; jump to update function
++   lda #$00
+    xba
+    lda CUR_SEL
+    asl
+    tax
+    jsr (update_jump_table, X)
+    rti
 
-; graphics data
-.bank 1 slot 0       ; We'll use bank 1
-.org 0
-.section "gfxdata"
+init_jump_table:
+    .DW menu.init
+    .DW waterfall.init
 
-palette_data:
-.fopen "gfx/palette.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
-@end:
+update_jump_table:
+    .DW menu.update
+    .DW waterfall.update
 
-tile_data:
-.fopen "gfx/tileset.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
-@end:
-
-bg1_data:
-.fopen "gfx/bg1.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
-@end:
-
-bg2_data:
-.fopen "gfx/bg2.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
-@end:
+dummy:
+    rtl
 
 .ENDS
+
+; bring out from header file to avoid multiple instances of EmptyHandler label
+.BANK 0 SLOT 0      ; Defines the ROM bank and the slot it is inserted in memory.
+.ORG 0              ; .ORG 0 is really $8000, because the slot starts at $8000
+.SECTION "EmptyVectors" SEMIFREE
+ 
+EmptyHandler:
+    rti
+.ENDS
+

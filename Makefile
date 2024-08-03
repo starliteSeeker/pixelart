@@ -1,24 +1,28 @@
 NAME=pixelart
 
-SRCS = main.asm
+SRCS = src/main.asm src/menu.asm src/waterfall.asm
+OBJS = $(patsubst %.asm,%.o,$(SRCS))
+DEPS = $(patsubst %.asm,%.d,$(SRCS))
 
 .DEFAULT_GOAL := $(NAME).smc
 
 ifneq (clean,$(MAKECMDGOALS))
-include $(patsubst %.asm,%.d,$(SRCS))
+include $(DEPS)
 endif
 
-%.o: src/%.asm %.d
+%.o: %.asm %.d
 	wla-65816 -o $@ $<
 
-%.d: src/%.asm
+%.d: %.asm
 	wla-65816 -M -MF $@ $<
 
-$(NAME).smc: $(patsubst %.asm,%.o,$(SRCS)) gfx/palette.bin
+$(NAME).smc: $(OBJS)
 	echo '[objects]' > temp
-	echo 'main.o' >> temp
+	for obj in $(OBJS) ; do \
+		echo $$obj >> temp ; \
+	done
 	wlalink temp $@
 	rm temp
 
 clean:
-	rm -f *.smc *.o *.d temp
+	rm -f *.smc $(OBJS) $(DEPS) temp
