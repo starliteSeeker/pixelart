@@ -163,8 +163,19 @@ update:
     ; cursor can be at top (0~6), middle (not top or bottom) or bottom (menu_count-8~menu_count-1)
     ; update menu text when cursor is in the middle section
 
+    ; A/B button
+    lda INPUT_PRESSED
+    ora INPUT_PRESSED+1
+    bit #%10000000
+    beq +
+    ; entry selected, set CUR_SEL to CURSOR_IDX
+    lda CURSOR_IDX
+    sta CUR_SEL
+    lda #-1
+    rts
+
     ; up button
-    lda INPUT_PRESSED+1
++   lda INPUT_PRESSED+1
     bit #%00001000
     beq +
     ; up button pressed
