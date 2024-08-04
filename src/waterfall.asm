@@ -94,7 +94,7 @@ init:
     stz BG2_XOFF
     stz BG2_YOFF
     sep #$20        ; 8bit a
-    rts
+    rtl
 
 ; run during vblank
 update:
@@ -131,7 +131,7 @@ update:
     sta $2110
 
     lda #0
-    rts
+    rtl
 
 .ENDS
 
