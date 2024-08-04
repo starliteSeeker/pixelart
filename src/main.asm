@@ -22,8 +22,7 @@ Start:
     sep #%00100000  ;8 bit ab
 
     ; initialize variable
-    lda #1
-    sta CUR_SEL
+    stz CUR_SEL
 
 restart:
     ; jump to init function based on jump table
