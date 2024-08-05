@@ -22,17 +22,11 @@ Start:
     sep #%00100000  ;8 bit ab
 
     ; initialize variable
-    lda #1
-    sta CUR_SEL
+    stz CUR_SEL
 
 restart:
     ; jump to init function based on jump table
-    lda #$00
-    xba
-    lda CUR_SEL
-    asl
-    tax
-    jsr (init_jump_table, X)
+    jsl prepare_jump_init
 
 init_end:
     lda #$0F
@@ -81,21 +75,68 @@ VBlank:
     rti
 
     ; jump to update function
-+   lda #$00
++   jsl prepare_jump_update
+    rti
+
+; jump table with rti trick to emulate long jump to subroutine witn index
+; jsl [jump_table, x]
+prepare_jump_init:
+    ; push program bank
+    lda #0
     xba
     lda CUR_SEL
+    tax
+    lda init_jump_table_bank.l, x
+    pha
+    ; push program counter
+    rep #$20 ; 16bit a
+    lda CUR_SEL
+    and #$00ff
     asl
     tax
-    jsr (update_jump_table, X)
+    lda init_jump_table.l, x
+    pha
+    sep #$20
+    ; push processor status
+    php
+    ; fake rti, emulate long jump with index
+    rti
+
+prepare_jump_update:
+    ; push program bank
+    lda #0
+    xba
+    lda CUR_SEL
+    tax
+    lda update_jump_table_bank.l, x
+    pha
+    ; push program counter
+    rep #$20 ; 16bit a
+    lda CUR_SEL
+    and #$00ff
+    asl
+    tax
+    lda update_jump_table.l, x
+    pha
+    sep #$20
+    ; push processor status
+    php
+    ; fake rti, emulate long jump with index
     rti
 
 init_jump_table:
     .DW menu.init
     .DW waterfall.init
+init_jump_table_bank:
+    .DB :menu.init
+    .DB :waterfall.init
 
 update_jump_table:
     .DW menu.update
     .DW waterfall.update
+update_jump_table_bank:
+    .DB :menu.update
+    .DB :waterfall.update
 
 dummy:
     rtl

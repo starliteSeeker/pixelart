@@ -155,7 +155,7 @@ init:
     ; initialize variable
     stz CURSOR_IDX
 
-    rts
+    rtl
 
 ; run during vblank
 update:
@@ -172,7 +172,7 @@ update:
     lda CURSOR_IDX
     sta CUR_SEL
     lda #-1
-    rts
+    rtl
 
     ; up button
 +   lda INPUT_PRESSED+1
@@ -188,7 +188,7 @@ update:
 +   bit #%00000100
     bne +
 ret lda #0
-    rts
+    rtl
 +   ; down button pressed
     lda CURSOR_IDX
     ina
@@ -252,7 +252,7 @@ scroll_bot: ; idx = count-8~count-1
     xba
     sta $210e
     lda #0
-    rts
+    rtl
 
 scroll_mid:
     ; update menu entry text
@@ -367,7 +367,7 @@ scroll_mid:
     lda #-1
     sta $210e
     lda #0
-    rts
+    rtl
 
 .ENDS
 
