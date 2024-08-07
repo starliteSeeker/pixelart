@@ -59,6 +59,7 @@ init:
     lda #%00000001      ; start DMA, channel 0
     sta $420b
     ; load bg2 (menu text)
+    stz $2115 ; increment vram address after write to $2118
     rep #$20 ; 16bit a
     lda #$2000 ; VRAM starting address
     sta $2116
@@ -74,13 +75,15 @@ init:
     asl
     asl
     tay
--   lda menu_entry.l, x
-    and #$00ff
+    sep #$20 ; 8bit a
+    stz $2119
+-   lda menu_entry.l, x ; $2119 is always 0, write to $2118 only
     sta $2118
     inx
     dey
     bne -
     ; fill with empty tiles (16 + max(16 - count, 0) rows)
+    rep #$20 ; 16bit a
     lda menu_entry_count.l
     and #$00ff
     sec
@@ -95,10 +98,12 @@ init:
     asl
     asl
     tay
+    sep #$20 ; 8bit a
 -   stz $2118
     iny
     bmi -
-    sep #$20 ; 8bit a
+    lda #$80
+    sta $2115 ; reset register value to before
     ; load bg3 (menu background)
     ldy #$3000 ; VRAM starting address
     sty $2116
