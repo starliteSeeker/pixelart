@@ -58,12 +58,37 @@ init:
     sta $4301           ; set destination
     lda #%00000001      ; start DMA, channel 0
     sta $420b
+
     ; load bg2 (menu text)
-    stz $2115 ; increment vram address after write to $2118
+    ; dma0 (low byte of text data), dma1 (high byte of text data, all zeros),
+    ; and dma2 (zero fill rest) 
+    ldx #menu_entry
+    stx $4302
+    lda #:menu_entry
+    sta $4304
+    lda #$18
+    sta $4301
+    lda #%00000000 ; one address write once
+    sta $4300
+    ldx #zero_data
+    stx $4312
+    lda #:zero_data
+    sta $4314
+    lda #$19
+    sta $4311
+    lda #%00001000 ; fixed address, transfer words
+    sta $4310
+    ldx #zero_data
+    stx $4322
+    lda #:zero_data
+    sta $4324
+    lda #$18
+    sta $4321
+    lda #%00001001 ; fixed address, transfer words
+    sta $4320
+
     rep #$20 ; 16bit a
-    lda #$2000 ; VRAM starting address
-    sta $2116
-    ldx #0
+    ; length of text data = 32 * min(entry_count, 16)
     lda menu_entry_count.l
     and #$00ff
     cmp #16 ; cap to 16 entries
@@ -74,36 +99,29 @@ init:
     asl
     asl
     asl
-    tay
+    sta $4305
+    sta $4315
+    ; length of zero block = 32 * 32 - length of text data
+    eor #-1
+    ina
+    clc
+    adc #(32*32)
+    asl ; *2 because we're writing 2 bytes at once
+    sta $4325
     sep #$20 ; 8bit a
-    stz $2119
--   lda menu_entry.l, x ; $2119 is always 0, write to $2118 only
-    sta $2118
-    inx
-    dey
-    bne -
-    ; fill with empty tiles (16 + max(16 - count, 0) rows)
-    rep #$20 ; 16bit a
-    lda menu_entry_count.l
-    and #$00ff
-    sec
-    sbc #16
-    blt +
-    lda #0
-+   sec
-    sbc #16
-    asl
-    asl
-    asl
-    asl
-    asl
-    tay
-    sep #$20 ; 8bit a
--   stz $2118
-    iny
-    bmi -
+
+    ldx #$2000 ; VRAM starting address
+    stx $2116
+    stz $2115 ; increment vram address after write to $2118
+    lda #%00000001 ; enable dma 0
+    sta $420b
     lda #$80
     sta $2115 ; reset register value to before
+    ldx #$2000 ; VRAM starting address
+    stx $2116
+    lda #%00000110 ; enable dma 1 and 2
+    sta $420b
+
     ; load bg3 (menu background)
     ldy #$3000 ; VRAM starting address
     sty $2116
@@ -128,6 +146,7 @@ init:
     lda #$30  ; data starts from $3000
     sta $2109       ; for BG3
     stz $210b ; tileset starts at $0000
+    stz $210c
 
     lda #%00000111 ; enable BG1, 2 and 3
     sta $212c
@@ -380,7 +399,10 @@ scroll_mid:
 .ORG 0
 .SECTION "menu_data"
 
-; max count 127? because jump table code
+zero_data:
+    .DB 0, 0
+
+; max allowed count less than 255, not that there's plan to use up all of them
 menu_entry_count:
     .DB (menu_entry@end - menu_entry) / 32
 
