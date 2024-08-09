@@ -44,20 +44,26 @@ init:
     sta $420b
 
     ; load bg1 (select arrow)
+    ; initialize with zeros
     ldy #$1000 ; VRAM starting address
     sty $2116
-    ldx #bg1_data   ; Address
-    lda #:bg1_data  ; of tiles
-    ldy #(bg1_data@end - bg1_data)      ; length of data
+    ldx #zero_data   ; Address
+    lda #:zero_data  ; of tiles
+    ldy #(32*32*2)      ; length of data
     stx $4302           ; write
     sta $4304           ; address
     sty $4305           ; and length
-    lda #%00000001      ; set this mode (transferring words)
+    lda #%00001001 ; fixed address, transfer words
     sta $4300
     lda #$18            ; $211[89]: VRAM data write
     sta $4301           ; set destination
     lda #%00000001      ; start DMA, channel 0
     sta $420b
+    ; put arrow
+    ldy #$1103
+    sty $2116
+    lda #$01
+    sta $2118
 
     ; load bg2 (menu text)
     ; dma0 (low byte of text data), dma1 (high byte of text data, all zeros),
@@ -76,7 +82,7 @@ init:
     sta $4314
     lda #$19
     sta $4311
-    lda #%00001000 ; fixed address, transfer words
+    lda #%00001000 ; fixed address, transfer bytes
     sta $4310
     ldx #zero_data
     stx $4322
@@ -101,7 +107,7 @@ init:
     asl
     sta $4305
     sta $4315
-    ; length of zero block = 32 * 32 - length of text data
+    ; length of zero block = 2 * (32 * 32 - length of text data)
     eor #-1
     ina
     clc
@@ -424,16 +430,6 @@ palette_data:
 
 text_data:
 .fopen "gfx/ascii.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
-@end:
-
-bg1_data:
-.fopen "gfx/menu/bg1.bin" fp
 .fsize fp t
 .repeat t
 .fread fp d
