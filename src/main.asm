@@ -126,16 +126,20 @@ prepare_jump_update:
 
 init_jump_table:
     .DW menu.init
+    .DW hello_world.init
     .DW waterfall.init
 init_jump_table_bank:
     .DB :menu.init
+    .DB :hello_world.init
     .DB :waterfall.init
 
 update_jump_table:
     .DW menu.update
+    .DW hello_world.update
     .DW waterfall.update
 update_jump_table_bank:
     .DB :menu.update
+    .DB :hello_world.update
     .DB :waterfall.update
 
 dummy:

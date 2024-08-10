@@ -1,6 +1,6 @@
 NAME=pixelart
 
-SRCS = src/main.asm src/menu.asm src/waterfall.asm
+SRCS = src/main.asm src/menu.asm src/waterfall.asm src/hello_world.asm
 OBJS = $(patsubst %.asm,%.o,$(SRCS))
 DEPS = $(patsubst %.asm,%.d,$(SRCS))
 

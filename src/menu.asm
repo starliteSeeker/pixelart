@@ -415,7 +415,8 @@ menu_entry_count:
 menu_entry:
     ;   "each.entry.is.32.bytes.........."
     .DB "./                              "
-    .DB "waterfall                       "
+    .DB "Hello World                     "
+    .DB "Waterfall                       "
 @end
 
 palette_data:
