@@ -10,6 +10,8 @@ The most effort I'm willing to put in making gifs that don't even look good.
 
 palette, tileset and tilemap basics
 
+![hello_world](https://github.com/user-attachments/assets/c7a6af96-521e-4e9d-8c7f-84003a699a8d)
+
 ## waterfall
 
 background offset
