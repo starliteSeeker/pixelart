@@ -403,21 +403,49 @@ scroll_mid:
 
 .BANK 1 SLOT 0
 .ORG 0
-.SECTION "menu_data"
+.SECTION "menu_data" NAMESPACE "menu"
 
 zero_data:
     .DB 0, 0
 
 ; max allowed count less than 255, not that there's plan to use up all of them
-menu_entry_count:
-    .DB (menu_entry@end - menu_entry) / 32
-
 menu_entry:
     ;   "each.entry.is.32.bytes.........."
     .DB "./                              "
     .DB "Hello World                     "
     .DB "Waterfall                       "
 @end
+
+.DEFINE COUNT (menu_entry@end - menu_entry) / 32
+menu_entry_count:
+    .DB COUNT
+
+init_jump_table:
+    .DW menu.init
+    .DW hello_world.init
+    .DW waterfall.init
+@end
+init_jump_table_bank:
+    .DB :menu.init
+    .DB :hello_world.init
+    .DB :waterfall.init
+@end
+
+update_jump_table:
+    .DW menu.update
+    .DW hello_world.update
+    .DW waterfall.update
+@end
+update_jump_table_bank:
+    .DB :menu.update
+    .DB :hello_world.update
+    .DB :waterfall.update
+@end
+
+; sanity check: do jump tables have the same number of entries as menu names
+.IF COUNT != ((init_jump_table@end - init_jump_table) / 2) || COUNT != (init_jump_table_bank@end - init_jump_table_bank) || COUNT != ((update_jump_table@end - update_jump_table) / 2) || COUNT != (update_jump_table_bank@end - update_jump_table_bank)
+    .FAIL "Entry count doesn't match up."
+.ENDIF
 
 palette_data:
 .fopen "gfx/menu/palette.bin" fp

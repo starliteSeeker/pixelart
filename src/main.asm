@@ -86,7 +86,7 @@ prepare_jump_init:
     xba
     lda CUR_SEL
     tax
-    lda init_jump_table_bank.l, x
+    lda menu.init_jump_table_bank.l, x
     pha
     ; push program counter
     rep #$20 ; 16bit a
@@ -94,7 +94,7 @@ prepare_jump_init:
     and #$00ff
     asl
     tax
-    lda init_jump_table.l, x
+    lda menu.init_jump_table.l, x
     pha
     sep #$20
     ; push processor status
@@ -108,7 +108,7 @@ prepare_jump_update:
     xba
     lda CUR_SEL
     tax
-    lda update_jump_table_bank.l, x
+    lda menu.update_jump_table_bank.l, x
     pha
     ; push program counter
     rep #$20 ; 16bit a
@@ -116,34 +116,13 @@ prepare_jump_update:
     and #$00ff
     asl
     tax
-    lda update_jump_table.l, x
+    lda menu.update_jump_table.l, x
     pha
     sep #$20
     ; push processor status
     php
     ; fake rti, emulate long jump with index
     rti
-
-init_jump_table:
-    .DW menu.init
-    .DW hello_world.init
-    .DW waterfall.init
-init_jump_table_bank:
-    .DB :menu.init
-    .DB :hello_world.init
-    .DB :waterfall.init
-
-update_jump_table:
-    .DW menu.update
-    .DW hello_world.update
-    .DW waterfall.update
-update_jump_table_bank:
-    .DB :menu.update
-    .DB :hello_world.update
-    .DB :waterfall.update
-
-dummy:
-    rtl
 
 .ENDS
 
