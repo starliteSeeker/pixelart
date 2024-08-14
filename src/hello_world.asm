@@ -100,13 +100,7 @@ message:
 @end:
 
 tile_data:
-.fopen "gfx/ascii.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/ascii.bin"
 @end:
 
 .ENDS

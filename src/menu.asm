@@ -453,33 +453,15 @@ update_jump_table_bank:
 .ENDIF
 
 palette_data:
-.fopen "gfx/menu/palette.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/menu/palette.bin"
 @end:
 
 text_data:
-.fopen "gfx/ascii.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/ascii.bin" 
 @end:
 
 bg3_data:
-.fopen "gfx/menu/bg3.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/menu/bg3.bin" 
 @end:
 
 .ENDS

@@ -85,13 +85,13 @@ init:
     lda #:cgdata_table
     sta $4314
 
+    lda #%00000011 ; enable HDMA 0 and 1
+    sta $420c
+
     rtl
 
 ; run during vblank
 update:
-    lda #%00000011 ; enable HDMA 0 and 1
-    sta $420c
-
     lda #0
     rtl
 
@@ -110,31 +110,19 @@ cgadd_table:
     .DB 20, 0
     .DB 0
 cgdata_table:
-    .DB 100, %11011101, %00101101
+    .DB 100, %11011101, %00101101 ; gradient from orange ...
     .DB 60, %01011001, %00100101
     .DB 30, %11010110, %00010100
     .DB 20, %01110000, %00001100
-    .DB 20, %00101011, %00000100
+    .DB 20, %00101011, %00000100 ; ... to brown
     .DB 0
 
 tile_data:
-.fopen "gfx/desert_sunset/tileset.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/desert_sunset/tileset.bin" 
 @end:
 
 bg1_data:
-.fopen "gfx/desert_sunset/bg1.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/desert_sunset/bg1.bin" 
 @end:
 
 .ENDS
