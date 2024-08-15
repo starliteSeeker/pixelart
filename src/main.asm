@@ -25,6 +25,9 @@ Start:
     stz CUR_SEL
 
 restart:
+    ; reset HDMA
+    stz $420c
+
     ; jump to init function based on jump table
     jsl prepare_jump_init
 

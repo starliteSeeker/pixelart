@@ -141,43 +141,19 @@ update:
 .section "gfxdata" NAMESPACE "waterfall"
 
 palette_data:
-.fopen "gfx/waterfall/palette.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/waterfall/palette.bin"
 @end:
 
 tile_data:
-.fopen "gfx/waterfall/tileset.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/waterfall/tileset.bin"
 @end:
 
 bg1_data:
-.fopen "gfx/waterfall/bg1.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/waterfall/bg1.bin"
 @end:
 
 bg2_data:
-.fopen "gfx/waterfall/bg2.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/waterfall/bg2.bin"
 @end:
 
 .ENDS

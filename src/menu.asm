@@ -414,6 +414,7 @@ menu_entry:
     .DB "./                              "
     .DB "Hello World                     "
     .DB "Waterfall                       "
+    .DB "Desert sunset                   "
 @end
 
 .DEFINE COUNT (menu_entry@end - menu_entry) / 32
@@ -424,22 +425,26 @@ init_jump_table:
     .DW menu.init
     .DW hello_world.init
     .DW waterfall.init
+    .DW desert_sunset.init
 @end
 init_jump_table_bank:
     .DB :menu.init
     .DB :hello_world.init
     .DB :waterfall.init
+    .DB :desert_sunset.init
 @end
 
 update_jump_table:
     .DW menu.update
     .DW hello_world.update
     .DW waterfall.update
+    .DW desert_sunset.update
 @end
 update_jump_table_bank:
     .DB :menu.update
     .DB :hello_world.update
     .DB :waterfall.update
+    .DB :desert_sunset.update
 @end
 
 ; sanity check: do jump tables have the same number of entries as menu names
@@ -448,33 +453,15 @@ update_jump_table_bank:
 .ENDIF
 
 palette_data:
-.fopen "gfx/menu/palette.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/menu/palette.bin"
 @end:
 
 text_data:
-.fopen "gfx/ascii.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/ascii.bin" 
 @end:
 
 bg3_data:
-.fopen "gfx/menu/bg3.bin" fp
-.fsize fp t
-.repeat t
-.fread fp d
-.db d
-.endr
-.undefine t, d
+LOAD_FILE "gfx/menu/bg3.bin" 
 @end:
 
 .ENDS

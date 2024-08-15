@@ -60,3 +60,13 @@
     bcs label
 .ENDM
 
+.MACRO LOAD_FILE ARGS path
+.fopen path fp
+.fsize fp t
+.repeat t
+.fread fp d
+.db d
+.endr
+.undefine t, d
+.ENDM
+
