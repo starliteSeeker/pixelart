@@ -17,3 +17,9 @@ palette, tileset and tilemap basics
 background offset
 
 ![waterfall](https://github.com/user-attachments/assets/53bc7739-d028-4fde-a24c-4e793809efa5)
+
+## desert sunset
+
+first test with HDMA
+
+![desert_sunset](https://github.com/user-attachments/assets/7bea389c-e7ce-4f80-8e7d-231b95f30955)
