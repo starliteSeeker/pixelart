@@ -89,12 +89,51 @@ init:
     stz $2122
     stz $2122
     
-    ; load sprite
+    ; load background
+    ldy #$2000 ; VRAM starting address
+    sty $2116
+    ldx #bg1_data   ; Address
+    lda #:bg1_data  ; of tiles
+    ldy #(bg1_data@end - bg1_data)      ; length of data
+    stx $4302           ; write
+    sta $4304           ; address
+    sty $4305           ; and length
+    lda #%00000001      ; set this mode (transferring words)
+    sta $4300
+    lda #$18            ; $211[89]: VRAM data write
+    sta $4301           ; set destination
+    ldx #empty_tile   ; Address
+    lda #:empty_tile  ; of tiles
+    ldy #(32*24*2)      ; length of data
+    stx $4312           ; write
+    sta $4314           ; address
+    sty $4315           ; and length
+    lda #%00001001 ; fixed address, transfer words
+    sta $4310
+    lda #$18            ; $211[89]: VRAM data write
+    sta $4311           ; set destination
+    lda #%00000011      ; start DMA, channel 0 and 1
+    sta $420b
+
+    ; background initialization
+    lda #%00010000  ; 16x16 tiles, mode 0
+    sta $2105       ; screen mode register
+    lda #$20  ; data starts from $2000
+    sta $2107       ; for BG1
+    ; set background scroll
+    stz $210d
+    stz $210d
+    lda #(-$40)
+    sta $210e
+    lda #-1
+    sta $210e
+
+    ; load graphics
     ldy #$0000          ; Write to VRAM from $0000
     sty $2116
-    ldx #sprite_data   ; Address
-    lda #:sprite_data  ; of tiles
-    ldy #(sprite_data@end - sprite_data)      ; length of data
+    ldx #graphics_data   ; Address
+    lda #:graphics_data  ; of tiles
+    ldy #(graphics_data@end - graphics_data)      ; length of data
     stx $4302           ; write
     sta $4304           ; address
     sty $4305           ; and length
@@ -117,20 +156,22 @@ init:
     stz $2104 ; y = 0
     lda #4 ; tile idx = 4
     sta $2104
-    stz $2104
+    lda #%00110000 ; priority = 3
+    sta $2104
     ; sprite 1
     stz $2104 ; x = 0
     stz $2104 ; y = 0
     stz $2104 ; tile idx = 0
-    stz $2104
+    lda #%00110010 ; priority 3, palette 1
+    sta $2104
 
     ldx #$0100
     stx $2102
     lda #%00001000 ; size = 0 for sprite 0, 1 for sprite 1
     sta $2104
 
-    ; enable object layer
-    lda #$10
+    ; enable object layer and bg1
+    lda #$11
     sta $212c
 
     rtl
@@ -317,6 +358,9 @@ hit:
 .org 0
 .section "gfxdata" NAMESPACE "dvd_logo"
 
+empty_tile:
+    .DB $2c, $00
+
 .DEFINE R $001f
 .DEFINE G $03e0
 .DEFINE B $7c00
@@ -328,8 +372,13 @@ color_data:
     .DW G, B, C, R, Y, M
     .DW B, R, M, G, C, Y
 
-sprite_data:
-LOAD_FILE "gfx/dvd_logo/sprite.bin"
+; clever trick / war crime: 4bpp (sprite) and 2bpp (background tile) in the same file
+graphics_data:
+LOAD_FILE "gfx/dvd_logo/graphics.bin"
+@end:
+
+bg1_data:
+LOAD_FILE "gfx/dvd_logo/bg1.bin"
 @end:
 
 .ENDS
