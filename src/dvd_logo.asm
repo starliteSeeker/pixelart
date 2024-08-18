@@ -15,7 +15,7 @@ VX0_H DB
 VY0 .DW
 VY0_L DB
 VY0_H DB
-COUNT0 DB ; counts times the sprite hits walls, used for updating palette
+COUNT0 DB ; 0 -> 24 -> 12 -> loop, used for updating palette
 X1 .DW
 X1_L DB
 X1_H DB
@@ -219,6 +219,8 @@ update:
     ina
     sta VX0
     sep #$20 ; 8bit a
+    ; cycle palette
+    jsr cycle_palette_0
 
     ; update position
     lda VX0_H
@@ -247,6 +249,8 @@ update:
     ina
     sta VY0
     sep #$20 ; 8bit a
+    ; cycle palette
+    jsr cycle_palette_0
 
     ; update position
     lda VY0_H
@@ -276,6 +280,8 @@ update:
     ina
     sta VX1
     sep #$20 ; 8bit a
+    ; cycle palette
+    jsr cycle_palette_1
 
     ; update position
     lda VX1_H
@@ -304,6 +310,8 @@ update:
     ina
     sta VY1
     sep #$20 ; 8bit a
+    ; cycle palette
+    jsr cycle_palette_1
 
     ; update position
     lda VY1_H
@@ -350,6 +358,52 @@ hit:
 
     lda #0
     rtl
+
+cycle_palette_0:
+    lda #0
+    xba
+    lda COUNT0
+    sec
+    sbc #12
+    bpl ++
+    lda #24
+++  sta COUNT0
+    tax
+    ldy #6
+    lda #$81
+    sta $2121
+-   lda color_data.l, x
+    sta $2122
+    inx
+    lda color_data.l, x
+    sta $2122
+    inx
+    dey
+    bne -
+    rts
+
+cycle_palette_1:
+    lda #0
+    xba
+    lda COUNT1
+    sec
+    sbc #12
+    bpl ++
+    lda #24
+++  sta COUNT1
+    tax
+    ldy #6
+    lda #$91
+    sta $2121
+-   lda color_data.l, x
+    sta $2122
+    inx
+    lda color_data.l, x
+    sta $2122
+    inx
+    dey
+    bne -
+    rts
 
 .ENDS
 
