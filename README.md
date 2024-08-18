@@ -23,3 +23,10 @@ background offset
 first test with HDMA
 
 ![desert_sunset](https://github.com/user-attachments/assets/7bea389c-e7ce-4f80-8e7d-231b95f30955)
+
+## DVD logo
+
+first test with objects
+
+![dvd_logo](https://github.com/user-attachments/assets/8fa1dd04-cf14-4a34-a27e-c8b05dc091ae)
+
