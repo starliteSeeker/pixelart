@@ -204,9 +204,8 @@ update:
     ; detect bounce
     ; sprite 0 horizontal
     lda X0_H
-    bpl +
     cmp #-16
-    blt +
+    blt + ; branch if x < 256-16 (and x >= 0 because blt is unsigned compare)
 
     ; collided with wall
     ; set flag
@@ -235,7 +234,6 @@ update:
 
 +   ; sprite 0 vertical
     lda Y0_H
-    bpl +
     cmp #-16-(256-224)
     blt +
     ; collided with wall
@@ -265,7 +263,6 @@ update:
 
 +   ; sprite 1 horizontal
     lda X1_H
-    bpl +
     cmp #-32
     blt +
 
@@ -296,7 +293,6 @@ update:
 
 +   ; sprite 1 vertical
     lda Y1_H
-    bpl +
     cmp #-32-(256-224)
     blt +
     ; collided with wall

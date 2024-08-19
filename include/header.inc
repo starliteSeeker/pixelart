@@ -53,6 +53,7 @@
 ;---------------------------------- END -------------------------------------
 
 
+;  both blt and bge are unsigned compares
 .MACRO blt ARGS label ; branch if less than
     bcc label
 .ENDM
