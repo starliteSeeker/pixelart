@@ -186,24 +186,28 @@ update:
     sta $211b
     lda $05
     sta $211b
+    lda $2134
+    sta $04
     lda $2135
     clc
     adc #(256/2-16/2)
-    sta $04 ; x position of earth
+    sta $05 ; x position of earth
     lda $02
     sta $211b
     lda $03
     sta $211b
+    lda $2134
+    sta $02
     lda $2135
     clc
     adc #(224/2-16/2)
-    sta $02 ; y position of earth
+    sta $03 ; y position of earth
 
     ldx #$0002
     stx $2102
-    lda $04
+    lda $05
     sta $2104
-    lda $02
+    lda $03
     sta $2104
 
     ; calculate moon position
@@ -213,9 +217,11 @@ update:
     sta $211b
     lda $09
     sta $211b
-    lda $2135
+    lda $2134
     clc
     adc $04
+    lda $2135
+    adc $05
     clc
     adc #(16/2-8/2)
     sta $08 ; x position of moon
@@ -223,9 +229,11 @@ update:
     sta $211b
     lda $07
     sta $211b
-    lda $2135
+    lda $2134
     clc
     adc $02
+    lda $2135
+    adc $03
     clc
     adc #(16/2-8/2)
     sta $06 ; y position of moon
