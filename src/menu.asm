@@ -416,6 +416,7 @@ menu_entry:
     .DB "Waterfall                       "
     .DB "Desert sunset                   "
     .DB "DVD logo                        "
+    .DB "Orbits                          "
 @end
 
 .DEFINE COUNT (menu_entry@end - menu_entry) / 32
@@ -428,6 +429,7 @@ init_jump_table:
     .DW waterfall.init
     .DW desert_sunset.init
     .DW dvd_logo.init
+    .DW orbits.init
 @end
 init_jump_table_bank:
     .DB :menu.init
@@ -435,6 +437,7 @@ init_jump_table_bank:
     .DB :waterfall.init
     .DB :desert_sunset.init
     .DB :dvd_logo.init
+    .DB :orbits.init
 @end
 
 update_jump_table:
@@ -443,6 +446,7 @@ update_jump_table:
     .DW waterfall.update
     .DW desert_sunset.update
     .DW dvd_logo.update
+    .DW orbits.update
 @end
 update_jump_table_bank:
     .DB :menu.update
@@ -450,6 +454,7 @@ update_jump_table_bank:
     .DB :waterfall.update
     .DB :desert_sunset.update
     .DB :dvd_logo.update
+    .DB :orbits.update
 @end
 
 ; sanity check: do jump tables have the same number of entries as menu names

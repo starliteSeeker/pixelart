@@ -10,10 +10,13 @@
 .ORG 0
 .SECTION "MainCode"
 
-; RAM $0000 to $00FF reserved for main
-.DEFINE CUR_SEL $0000 EXPORT
-.DEFINE INPUT_PRESSED $0001 EXPORT ; 2 bytes, is button pressed on this frame
-.DEFINE INPUT_DOWN $0003 EXPORT ; 2 bytes, is button held down
+; RAM $0000 to $000F reserved for scratch ram
+; RAM $0010 to $00FF reserved for main
+.ENUM $0010 EXPORT
+CUR_SEL DB
+INPUT_PRESSED DW ; 2 bytes, is button pressed on this frame
+INPUT_DOWN DW ; 2 bytes, is button held down
+.ENDE
 
 Start:
     InitializeSNES            ; Init Snes :)

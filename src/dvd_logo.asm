@@ -144,7 +144,7 @@ init:
     lda #%00000001      ; start DMA, channel 0
     sta $420b
 
-    ; sprite starting position?
+    ; sprite starting position
     lda #%01100000 ; sprite stored at $0000, sizes are 16x16 and 32x32
     sta $2101
 

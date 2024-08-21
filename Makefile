@@ -1,6 +1,6 @@
 NAME=pixelart
 
-SRCS = src/main.asm src/menu.asm src/waterfall.asm src/hello_world.asm src/desert_sunset.asm src/dvd_logo.asm
+SRCS = $(wildcard src/*.asm)
 OBJS = $(patsubst %.asm,%.o,$(SRCS))
 DEPS = $(patsubst %.asm,%.d,$(SRCS))
 

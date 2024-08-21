@@ -30,3 +30,8 @@ first test with objects
 
 ![dvd_logo](https://github.com/user-attachments/assets/8fa1dd04-cf14-4a34-a27e-c8b05dc091ae)
 
+## Orbits
+
+circular motion and sine table
+
+![orbits](https://github.com/user-attachments/assets/95145c70-a7f2-40b0-a367-113ac270e33b)
